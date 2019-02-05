@@ -1,4 +1,10 @@
 <?php
+
+if (! isset($_SESSION['theMap']))
+{
+    session_start(['cookie_lifetime' => 600]);
+}
+
 print <<< END
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
 "http://www.w3.org/TR/html4/loose.dtd">
@@ -20,24 +26,28 @@ $city = (isset($_POST['city']) ? $_POST['city'] : '');
 $state = (isset($_POST['state']) ? $_POST['state'] : '');
 $zip = (isset($_POST['zip']) ? $_POST['zip'] : '');
 
-if (isset($_POST['getMap']))
+if ($_SESSION[$street][$city][$state][$zip])
+{
+    $cachedFile = $_SESSION[$street][$city][$state][$zip];
+} else {
+    unset($cachedFile);
+}
+
+if (isset($_POST['getMap']) && ! $_SESSION[$street][$city][$state][$zip])
 {
     //  request the map from Google
     $urlString = urlencode($street . "," . $city . "," . $state . "," . $zip);
     $URL = $googleBaseUrl.$googleCenter.$urlString.$googleZoom.
            $googleSize.$googleKey.$googleApiKey;
            
-    $curlSession = curl_init();
-    curl_setopt($curlSession, CURLOPT_URL, $URL);
-    curl_setopt($curlSession, CURLOPT_BINARYTRANSFER, true);
-    curl_setopt($curlSession, CURLOPT_RETURNTRANSFER, true);
-//    $theMap = json_decode(curl_exec($curlSession));
-    curl_close($curlSession);
     $theMap = file_get_contents($URL);
     //  write it to a file
-    $file = fopen("theMap.png","wb");
+    $fileName = time() . ".png";
+    $file = fopen($fileName,"wb");
     fwrite($file,$theMap);
     fclose($file);
+    //  cache it
+    $_SESSION[$street][$city][$state][$zip] = $fileName;
 }
 
 if (isset($_POST['clear']))
@@ -62,8 +72,10 @@ print "</form></div>\n";
 
 if (isset($_POST['getMap']))
 {	
-    print "<br><center>Your map:</center><br>\n";
-    print "<div align=center><img src=\"theMap.png\"></div>";
+    $fromCache = ($cachedFile ? " (from cache)" : "");
+    $theFile = ($cachedFile ? $cachedFile : $fileName);
+    print "<br><center>Your map$fromCache:</center><br>\n";
+    print "<div align=center><img src=\"$theFile\"></div>";
 }
 
 print <<< END
