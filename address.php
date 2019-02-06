@@ -1,9 +1,12 @@
 <?php
 
-if (! isset($_SESSION['theMap']))
-{
-    session_start(['cookie_lifetime' => 600]);
-}
+//if (! isset($_SESSION[$street][$city][$state][$zip]))
+//{
+//    session_start(['cookie_lifetime' => 600]);
+//}
+
+session_cache_expire(5);
+session_start(['cookie_lifetime' => 600]);
 
 print <<< END
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
